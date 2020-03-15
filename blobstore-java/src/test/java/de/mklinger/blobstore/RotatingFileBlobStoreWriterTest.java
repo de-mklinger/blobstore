@@ -37,10 +37,10 @@ public class RotatingFileBlobStoreWriterTest {
 		final File directory = tmp.newFolder();
 
 		try (RotatingFileBlobStoreWriter writer = RotatingFileBlobStoreWriter.builder()
-				.withDirectory(directory)
-				.withPrefix("blob")
-				.withSuffix(".bin")
-				.withMaxEntryCountPerFile(1)
+				.directory(directory)
+				.prefix("blob")
+				.suffix(".bin")
+				.maxEntryCountPerFile(1)
 				.build()) {
 
 			for (int i = 0; i < datas.length; i++) {

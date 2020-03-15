@@ -38,9 +38,9 @@ public class RotatingFileBlobStoreWriter extends AbstractBlobStoreWriter {
 		this.suffix = Objects.requireNonNull(builder.suffix);
 		this.maxEntryCount = builder.maxEntryCountPerFile;
 		this.delegateBuilder = FileBlobStoreWriter.builder()
-				.withDefaults(builder.defaults)
-				.withOverwrite(builder.overwrite)
-				.withMaxIndexEntriesInMemory(builder.maxIndexEntriesInMemory);
+				.defaults(builder.defaults)
+				.overwrite(builder.overwrite)
+				.maxIndexEntriesInMemory(builder.maxIndexEntriesInMemory);
 		this.files = new ArrayList<>();
 		this.nextIdx = 0;
 	}
@@ -60,7 +60,7 @@ public class RotatingFileBlobStoreWriter extends AbstractBlobStoreWriter {
 				throw new IOException("Target file already exists: " + f.getAbsolutePath());
 			}
 			currentWriter = delegateBuilder
-					.withBlobFile(f)
+					.blobFile(f)
 					.build();
 		}
 		entryCount++;
@@ -107,50 +107,59 @@ public class RotatingFileBlobStoreWriter extends AbstractBlobStoreWriter {
 		private String prefix;
 		private String suffix;
 		private BlobStoreDefaults defaults = BlobStoreDefaults.STANDARD_DEFAULTS;
-		private int maxIndexEntriesInMemory;
+		private int maxIndexEntriesInMemory = FileBlobStoreWriter.Builder.DEFAULT_MAX_ENTRIES_IN_MEMORY;
 		private int maxEntryCountPerFile;
 
-		public Builder withOverwrite(boolean overwrite) {
+		public Builder overwrite(boolean overwrite) {
 			this.overwrite = overwrite;
 			return this;
 		}
 
-		public Builder withDirectory(File directory) {
+		public Builder directory(File directory) {
 			this.directory = directory;
 			return this;
 		}
 
-		public Builder withPrefix(String prefix) {
+		public Builder prefix(String prefix) {
 			this.prefix = prefix;
 			return this;
 		}
 
-		public Builder withSuffix(String suffix) {
+		public Builder suffix(String suffix) {
 			this.suffix = suffix;
 			return this;
 		}
 
-		public Builder withDefaultMediaType(String mediaType) {
+		public Builder defaultMediaType(String mediaType) {
 			this.defaults = new BlobStoreDefaults(mediaType, this.defaults.getDefaultEncoding());
 			return this;
 		}
 
-		public Builder withDefaultEncoding(String encoding) {
+		public Builder defaultEncoding(String encoding) {
 			this.defaults = new BlobStoreDefaults(this.defaults.getDefaultMediaType(), encoding);
 			return this;
 		}
 
-		public Builder withDefaults(BlobStoreDefaults defaults) {
+		public Builder defaults(BlobStoreDefaults defaults) {
 			this.defaults = defaults;
 			return this;
 		}
 
-		public Builder withMaxIndexEntriesInMemory(int maxIndexEntriesInMemory) {
+		/**
+		 * Set number of index entries to keep in memory before dumping a index chunk to
+		 * disk. A value &lt;= 0 disables dumping of index chunks to disk, all index
+		 * entries will be kept in memory.
+		 *
+		 * <p>
+		 * Default value: {@value FileBlobStoreWriter.Builder#DEFAULT_MAX_ENTRIES_IN_MEMORY}.
+		 * </p>
+		 */
+		public Builder maxIndexEntriesInMemory(int maxIndexEntriesInMemory) {
 			this.maxIndexEntriesInMemory = maxIndexEntriesInMemory;
 			return this;
 		}
 
-		public Builder withMaxEntryCountPerFile(int maxEntryCountPerFile) {
+		public Builder maxEntryCountPerFile(int maxEntryCountPerFile) {
 			this.maxEntryCountPerFile = maxEntryCountPerFile;
 			return this;
 		}

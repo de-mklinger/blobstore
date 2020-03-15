@@ -44,8 +44,8 @@ public class MergeBlobs {
 		System.err.println("Output to: " + outputFile.getAbsolutePath());
 
 		try (FileBlobStoreWriter writer = FileBlobStoreWriter.builder()
-				.withBlobFile(outputFile)
-				.withOverwrite(true)
+				.blobFile(outputFile)
+				.overwrite(true)
 				.build()) {
 
 			for (final File inputFile : inputFiles) {

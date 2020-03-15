@@ -40,8 +40,8 @@ public class FileBlobStoreReaderTest {
 		final File f = tmp.newFile();
 
 		try (FileBlobStoreWriter w = FileBlobStoreWriter.builder()
-				.withBlobFile(f)
-				.withOverwrite(true)
+				.blobFile(f)
+				.overwrite(true)
 				.build()) {
 
 			for (final Entry<String, String> e : testData.entrySet()) {

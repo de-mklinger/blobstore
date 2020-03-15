@@ -258,12 +258,12 @@ public class FileBlobStoreWriter extends AbstractBlobStoreWriter {
 		private BlobStoreDefaults defaults = BlobStoreDefaults.STANDARD_DEFAULTS;
 		private int maxIndexEntriesInMemory = DEFAULT_MAX_ENTRIES_IN_MEMORY;
 
-		public Builder withOverwrite(boolean overwrite) {
+		public Builder overwrite(boolean overwrite) {
 			this.overwrite = overwrite;
 			return this;
 		}
 
-		public Builder withBlobFile(File blobFile) {
+		public Builder blobFile(File blobFile) {
 			this.blobFile = blobFile;
 			return this;
 		}
@@ -272,22 +272,22 @@ public class FileBlobStoreWriter extends AbstractBlobStoreWriter {
 		 * Enable usage of a index file and do not write index data into the blob file.
 		 * Do not set, or set to <code>null</code>, to produce a combined blob file.
 		 */
-		public Builder withIndexFile(File indexFile) {
+		public Builder indexFile(File indexFile) {
 			this.indexFile = indexFile;
 			return this;
 		}
 
-		public Builder withDefaultMediaType(String mediaType) {
+		public Builder defaultMediaType(String mediaType) {
 			this.defaults = new BlobStoreDefaults(mediaType, this.defaults.getDefaultEncoding());
 			return this;
 		}
 
-		public Builder withDefaultEncoding(String encoding) {
+		public Builder defaultEncoding(String encoding) {
 			this.defaults = new BlobStoreDefaults(this.defaults.getDefaultMediaType(), encoding);
 			return this;
 		}
 
-		public Builder withDefaults(BlobStoreDefaults defaults) {
+		public Builder defaults(BlobStoreDefaults defaults) {
 			this.defaults = defaults;
 			return this;
 		}
@@ -301,7 +301,7 @@ public class FileBlobStoreWriter extends AbstractBlobStoreWriter {
 		 * Default value: {@value #DEFAULT_MAX_ENTRIES_IN_MEMORY}.
 		 * </p>
 		 */
-		public Builder withMaxIndexEntriesInMemory(int maxIndexEntriesInMemory) {
+		public Builder maxIndexEntriesInMemory(int maxIndexEntriesInMemory) {
 			this.maxIndexEntriesInMemory = maxIndexEntriesInMemory;
 			return this;
 		}

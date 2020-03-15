@@ -39,8 +39,8 @@ public class FileBlobStoreWriterTest {
 
 		final File blobFile = tmp.newFile("blob2.bin");
 		try (BlobStoreWriter writer = FileBlobStoreWriter.builder()
-				.withBlobFile(blobFile)
-				.withOverwrite(true)
+				.blobFile(blobFile)
+				.overwrite(true)
 				.build()) {
 			for (int i = 0; i < datas.length; i++) {
 				writer.addBlobEntry("Entry" + (char)('A' + (char)i), new ByteArrayInputStream(datas[i]), "text/plain", ENCODING_IDENTITY);
@@ -67,9 +67,9 @@ public class FileBlobStoreWriterTest {
 	public void testChunks() throws IOException {
 		final File blobFilePlain = tmp.newFile("blob0.bin");
 		try (BlobStoreWriter writer = FileBlobStoreWriter.builder()
-				.withBlobFile(blobFilePlain)
-				.withOverwrite(true)
-				.withMaxIndexEntriesInMemory(-1)
+				.blobFile(blobFilePlain)
+				.overwrite(true)
+				.maxIndexEntriesInMemory(-1)
 				.build()) {
 			for (int i = 9876; i >= 0; i--) {
 				writer.addBlobEntry("Entry" + i, new ByteArrayInputStream(("data" + i).getBytes()), "text/plain", ENCODING_IDENTITY);
@@ -78,9 +78,9 @@ public class FileBlobStoreWriterTest {
 
 		final File blobFile1 = tmp.newFile("blob1.bin");
 		try (BlobStoreWriter writer = FileBlobStoreWriter.builder()
-				.withBlobFile(blobFile1)
-				.withOverwrite(true)
-				.withMaxIndexEntriesInMemory(1000)
+				.blobFile(blobFile1)
+				.overwrite(true)
+				.maxIndexEntriesInMemory(1000)
 				.build()) {
 			for (int i = 9876; i >= 0; i--) {
 				writer.addBlobEntry("Entry" + i, new ByteArrayInputStream(("data" + i).getBytes()), "text/plain", ENCODING_IDENTITY);
@@ -89,9 +89,9 @@ public class FileBlobStoreWriterTest {
 
 		final File blobFile2 = tmp.newFile("blob2.bin");
 		try (BlobStoreWriter writer = FileBlobStoreWriter.builder()
-				.withBlobFile(blobFile2)
-				.withOverwrite(true)
-				.withMaxIndexEntriesInMemory(100)
+				.blobFile(blobFile2)
+				.overwrite(true)
+				.maxIndexEntriesInMemory(100)
 				.build()) {
 			for (int i = 9876; i >= 0; i--) {
 				writer.addBlobEntry("Entry" + i, new ByteArrayInputStream(("data" + i).getBytes()), "text/plain", ENCODING_IDENTITY);
@@ -100,8 +100,8 @@ public class FileBlobStoreWriterTest {
 
 		final File blobFile3 = tmp.newFile("blob3.bin");
 		try (BlobStoreWriter writer = FileBlobStoreWriter.builder()
-				.withBlobFile(blobFile3)
-				.withOverwrite(true)
+				.blobFile(blobFile3)
+				.overwrite(true)
 				.build()) {
 			for (int i = 9876; i >= 0; i--) {
 				writer.addBlobEntry("Entry" + i, new ByteArrayInputStream(("data" + i).getBytes()), "text/plain", BlobEntryImpl.ENCODING_IDENTITY);
@@ -130,8 +130,8 @@ public class FileBlobStoreWriterTest {
 		final File blobFile = tmp.newFile();
 
 		try (BlobStoreWriter writer = FileBlobStoreWriter.builder()
-				.withBlobFile(blobFile)
-				.withOverwrite(true)
+				.blobFile(blobFile)
+				.overwrite(true)
 				.build()) {
 			writer.addBlobEntryGzEncoded("entry 1 gzip", new ByteArrayInputStream("entry 1 gzip VALUE".getBytes(UTF_8)));
 			writer.addBlobEntryUnencoded("entry 2 identity", new ByteArrayInputStream("entry 2 identity VALUE".getBytes(UTF_8)));

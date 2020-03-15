@@ -1,15 +1,20 @@
 package de.mklinger.blobstore;
 
+import static de.mklinger.blobstore.BlobEntry.ENCODING_IDENTITY;
+import static java.nio.charset.Charset.defaultCharset;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.apache.commons.io.FileUtils.readFileToString;
+import static org.junit.Assert.assertEquals;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,7 +43,7 @@ public class FileBlobStoreWriterTest {
 				.withOverwrite(true)
 				.build()) {
 			for (int i = 0; i < datas.length; i++) {
-				writer.addBlobEntry("Entry" + (char)('A' + (char)i), new ByteArrayInputStream(datas[i]), "text/plain", BlobEntryImpl.ENCODING_IDENTITY);
+				writer.addBlobEntry("Entry" + (char)('A' + (char)i), new ByteArrayInputStream(datas[i]), "text/plain", ENCODING_IDENTITY);
 			}
 		}
 
@@ -49,10 +54,10 @@ public class FileBlobStoreWriterTest {
 		reader.visitBlobEntries(new BlobEntryVisitor() {
 			@Override
 			public void visit(final BlobEntry blobEntry, final InputStream contents) {
-				Assert.assertEquals("Entry" + (char)('A' + (char)i[0]), blobEntry.getName());
-				Assert.assertEquals(100, blobEntry.getLength());
-				Assert.assertEquals("text/plain", blobEntry.getMediaType());
-				Assert.assertEquals(BlobEntryImpl.ENCODING_IDENTITY, blobEntry.getEncoding());
+				assertEquals("Entry" + (char)('A' + (char)i[0]), blobEntry.getName());
+				assertEquals(100, blobEntry.getLength());
+				assertEquals("text/plain", blobEntry.getMediaType());
+				assertEquals(ENCODING_IDENTITY, blobEntry.getEncoding());
 				i[0]++;
 			}
 		});
@@ -67,7 +72,7 @@ public class FileBlobStoreWriterTest {
 				.withMaxIndexEntriesInMemory(-1)
 				.build()) {
 			for (int i = 9876; i >= 0; i--) {
-				writer.addBlobEntry("Entry" + i, new ByteArrayInputStream(("data" + i).getBytes()), "text/plain", BlobEntryImpl.ENCODING_IDENTITY);
+				writer.addBlobEntry("Entry" + i, new ByteArrayInputStream(("data" + i).getBytes()), "text/plain", ENCODING_IDENTITY);
 			}
 		}
 
@@ -78,7 +83,7 @@ public class FileBlobStoreWriterTest {
 				.withMaxIndexEntriesInMemory(1000)
 				.build()) {
 			for (int i = 9876; i >= 0; i--) {
-				writer.addBlobEntry("Entry" + i, new ByteArrayInputStream(("data" + i).getBytes()), "text/plain", BlobEntryImpl.ENCODING_IDENTITY);
+				writer.addBlobEntry("Entry" + i, new ByteArrayInputStream(("data" + i).getBytes()), "text/plain", ENCODING_IDENTITY);
 			}
 		}
 
@@ -89,7 +94,7 @@ public class FileBlobStoreWriterTest {
 				.withMaxIndexEntriesInMemory(100)
 				.build()) {
 			for (int i = 9876; i >= 0; i--) {
-				writer.addBlobEntry("Entry" + i, new ByteArrayInputStream(("data" + i).getBytes()), "text/plain", BlobEntryImpl.ENCODING_IDENTITY);
+				writer.addBlobEntry("Entry" + i, new ByteArrayInputStream(("data" + i).getBytes()), "text/plain", ENCODING_IDENTITY);
 			}
 		}
 
@@ -103,20 +108,37 @@ public class FileBlobStoreWriterTest {
 			}
 		}
 
-		Assert.assertEquals(FileUtils.readFileToString(blobFilePlain, Charset.defaultCharset()), FileUtils.readFileToString(blobFile1, Charset.defaultCharset()));
-		Assert.assertEquals(FileUtils.readFileToString(blobFilePlain, Charset.defaultCharset()), FileUtils.readFileToString(blobFile2, Charset.defaultCharset()));
-		Assert.assertEquals(FileUtils.readFileToString(blobFilePlain, Charset.defaultCharset()), FileUtils.readFileToString(blobFile3, Charset.defaultCharset()));
-		Assert.assertEquals(FileUtils.readFileToString(blobFile1, Charset.defaultCharset()), FileUtils.readFileToString(blobFile2, Charset.defaultCharset()));
-		Assert.assertEquals(FileUtils.readFileToString(blobFile1, Charset.defaultCharset()), FileUtils.readFileToString(blobFile3, Charset.defaultCharset()));
-		Assert.assertEquals(FileUtils.readFileToString(blobFile2, Charset.defaultCharset()), FileUtils.readFileToString(blobFile3, Charset.defaultCharset()));
+		assertEquals(readFileToString(blobFilePlain, defaultCharset()), readFileToString(blobFile1, defaultCharset()));
+		assertEquals(readFileToString(blobFilePlain, defaultCharset()), readFileToString(blobFile2, defaultCharset()));
+		assertEquals(readFileToString(blobFilePlain, defaultCharset()), readFileToString(blobFile3, defaultCharset()));
+		assertEquals(readFileToString(blobFile1, defaultCharset()), readFileToString(blobFile2, defaultCharset()));
+		assertEquals(readFileToString(blobFile1, defaultCharset()), readFileToString(blobFile3, defaultCharset()));
+		assertEquals(readFileToString(blobFile2, defaultCharset()), readFileToString(blobFile3, defaultCharset()));
 
 		// assert idx chunk files are gone
 		final Set<String> validFilenames = new HashSet<>(Arrays.asList("blob0.bin", "blob1.bin", "blob2.bin", "blob3.bin"));
 		final File[] files = tmp.getRoot().listFiles();
-		Assert.assertEquals(4, files.length);
+		assertEquals(4, files.length);
 		for (final File file : files) {
 			final String filename = file.getName();
 			Assert.assertTrue("File should not exists: " + filename, validFilenames.contains(filename));
 		}
+	}
+
+	@Test
+	public void testWriteEncodedReadDecoded() throws IOException {
+		final File blobFile = tmp.newFile();
+
+		try (BlobStoreWriter writer = FileBlobStoreWriter.builder()
+				.withBlobFile(blobFile)
+				.withOverwrite(true)
+				.build()) {
+			writer.addBlobEntryGzEncoded("entry 1 gzip", new ByteArrayInputStream("entry 1 gzip VALUE".getBytes(UTF_8)));
+			writer.addBlobEntryUnencoded("entry 2 identity", new ByteArrayInputStream("entry 2 identity VALUE".getBytes(UTF_8)));
+		};
+
+		final FileBlobStoreReader reader = new FileBlobStoreReader(blobFile);
+		assertEquals("entry 1 gzip VALUE", IOUtils.toString(reader.getBlobEntryContentsDecoded("entry 1 gzip"), UTF_8));
+		assertEquals("entry 2 identity VALUE", IOUtils.toString(reader.getBlobEntryContentsDecoded("entry 2 identity"), UTF_8));
 	}
 }

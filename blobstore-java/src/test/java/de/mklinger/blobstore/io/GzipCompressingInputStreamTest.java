@@ -11,8 +11,6 @@ import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-import de.mklinger.blobstore.io.GzipCompressingInputStream;
-
 /**
  * @author Marc Klinger - mklinger[at]mklinger[dot]de - klingerm
  */
@@ -144,28 +142,28 @@ public class GzipCompressingInputStreamTest {
 
 	@Test(expected = NullPointerException.class)
 	public void testReadNull() throws IOException {
-		try (GzipCompressingInputStream in = new GzipCompressingInputStream(new ByteArrayInputStream(new byte[0]))) {
+		try (GzipCompressingInputStream in = emptyInstance()) {
 			in.read(null);
 		}
 	}
 
 	@Test(expected = NullPointerException.class)
 	public void testReadNull2() throws IOException {
-		try (GzipCompressingInputStream in = new GzipCompressingInputStream(new ByteArrayInputStream(new byte[0]))) {
+		try (GzipCompressingInputStream in = emptyInstance()) {
 			in.read(null, 0, 100);
 		}
 	}
 
 	@Test(expected = IndexOutOfBoundsException.class)
 	public void testReadIOOB() throws IOException {
-		try (GzipCompressingInputStream in = new GzipCompressingInputStream(new ByteArrayInputStream(new byte[0]))) {
+		try (GzipCompressingInputStream in = emptyInstance()) {
 			in.read(new byte[100], -1, 100);
 		}
 	}
 
 	@Test(expected = IndexOutOfBoundsException.class)
 	public void testReadIOOB2() throws IOException {
-		try (GzipCompressingInputStream in = new GzipCompressingInputStream(new ByteArrayInputStream(new byte[0]))) {
+		try (GzipCompressingInputStream in = emptyInstance()) {
 			in.read(new byte[100], 0, -1);
 		}
 	}
@@ -173,23 +171,27 @@ public class GzipCompressingInputStreamTest {
 
 	@Test(expected = IndexOutOfBoundsException.class)
 	public void testReadIOOB3() throws IOException {
-		try (GzipCompressingInputStream in = new GzipCompressingInputStream(new ByteArrayInputStream(new byte[0]))) {
+		try (GzipCompressingInputStream in = emptyInstance()) {
 			in.read(new byte[100], 100, 1);
 		}
 	}
 
 	@Test(expected = IndexOutOfBoundsException.class)
 	public void testReadIOOB4() throws IOException {
-		try (GzipCompressingInputStream in = new GzipCompressingInputStream(new ByteArrayInputStream(new byte[0]))) {
+		try (GzipCompressingInputStream in = emptyInstance()) {
 			in.read(new byte[100], 0, 101);
 		}
 	}
 
 	@Test
 	public void testReadZero() throws IOException {
-		try (GzipCompressingInputStream in = new GzipCompressingInputStream(new ByteArrayInputStream(new byte[0]))) {
+		try (GzipCompressingInputStream in = emptyInstance()) {
 			final int count = in.read(new byte[100], 50, 0);
 			Assert.assertEquals(0, count);
 		}
+	}
+
+	private GzipCompressingInputStream emptyInstance() throws IOException {
+		return new GzipCompressingInputStream(new ByteArrayInputStream(new byte[0]));
 	}
 }

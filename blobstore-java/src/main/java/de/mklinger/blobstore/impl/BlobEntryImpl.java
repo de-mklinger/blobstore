@@ -1,8 +1,11 @@
-package de.mklinger.blobstore;
+package de.mklinger.blobstore.impl;
 
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Objects;
+
+import de.mklinger.blobstore.BlobEntry;
+import de.mklinger.blobstore.BlobStoreDefaults;
 
 /**
  * Entry in a blob store.

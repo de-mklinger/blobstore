@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.GZIPInputStream;
 
+import de.mklinger.blobstore.impl.BlobEntryImpl;
 import de.mklinger.blobstore.io.LazyInputStream;
 import de.mklinger.blobstore.io.RandomAccessFileInputStream;
 

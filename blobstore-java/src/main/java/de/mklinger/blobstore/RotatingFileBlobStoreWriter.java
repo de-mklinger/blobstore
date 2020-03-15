@@ -10,60 +10,39 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.mklinger.blobstore.io.GzipCompressingInputStream;
+import de.mklinger.blobstore.impl.AbstractBlobStoreWriter;
 
 /**
  * @author Marc Klinger - mklinger[at]mklinger[dot]de
  */
-public class RotatingFileBlobStoreWriter implements BlobStoreWriter {
+public class RotatingFileBlobStoreWriter extends AbstractBlobStoreWriter {
 	private static final Logger LOG = LoggerFactory.getLogger(RotatingFileBlobStoreWriter.class);
 
 	private final File directory;
 	private final String prefix;
 	private final String suffix;
+	private final FileBlobStoreWriter.Builder delegateBuilder;
 
 	private final int maxEntryCount;
-	private final BlobStoreDefaults defaults;
 	private int entryCount;
 	private BlobStoreWriter currentWriter;
 	private final List<File> files;
 	private int nextIdx;
 
-	public RotatingFileBlobStoreWriter(final File directory, final String prefix, final String suffix, final int maxEntryCount) {
-		this(directory, prefix, suffix, maxEntryCount, BlobStoreDefaults.STANDARD_DEFAULTS);
-	}
-
-	public RotatingFileBlobStoreWriter(final File directory, final String prefix, final String suffix, final int maxEntryCount, BlobStoreDefaults defaults) {
-		if (maxEntryCount <= 0) {
+	public RotatingFileBlobStoreWriter(Builder builder) {
+		if (builder.maxEntryCountPerFile <= 0) {
 			throw new IllegalArgumentException();
 		}
-		this.directory = Objects.requireNonNull(directory);
-		this.prefix = Objects.requireNonNull(prefix);
-		this.suffix = Objects.requireNonNull(suffix);
-		this.maxEntryCount = maxEntryCount;
-		this.defaults = defaults;
+		this.directory = Objects.requireNonNull(builder.directory);
+		this.prefix = Objects.requireNonNull(builder.prefix);
+		this.suffix = Objects.requireNonNull(builder.suffix);
+		this.maxEntryCount = builder.maxEntryCountPerFile;
+		this.delegateBuilder = FileBlobStoreWriter.builder()
+				.withDefaults(builder.defaults)
+				.withOverwrite(builder.overwrite)
+				.withMaxIndexEntriesInMemory(builder.maxIndexEntriesInMemory);
 		this.files = new ArrayList<>();
 		this.nextIdx = 0;
-	}
-
-	@Override
-	public void addBlobEntryGzEncoded(String name, InputStream nonGzIn) throws IOException {
-		addBlobEntry(name, new GzipCompressingInputStream(nonGzIn), null, BlobEntry.ENCODING_GZIP);
-	}
-
-	@Override
-	public void addBlobEntryGzEncoded(String name, InputStream nonGzIn, String mediaType) throws IOException {
-		addBlobEntry(name, new GzipCompressingInputStream(nonGzIn), mediaType, BlobEntry.ENCODING_GZIP);
-	}
-
-	@Override
-	public void addBlobEntryUnencoded(String name, InputStream in) throws IOException {
-		addBlobEntry(name, in, null, BlobEntry.ENCODING_IDENTITY);
-	}
-
-	@Override
-	public void addBlobEntryUnencoded(String name, InputStream in, String mediaType) throws IOException {
-		addBlobEntry(name, in, mediaType, BlobEntry.ENCODING_IDENTITY);
 	}
 
 	@Override
@@ -80,10 +59,8 @@ public class RotatingFileBlobStoreWriter implements BlobStoreWriter {
 			if (f.exists()) {
 				throw new IOException("Target file already exists: " + f.getAbsolutePath());
 			}
-			currentWriter = FileBlobStoreWriter.builder()
+			currentWriter = delegateBuilder
 					.withBlobFile(f)
-					.withOverwrite(true)
-					.withDefaults(defaults)
 					.build();
 		}
 		entryCount++;
@@ -119,4 +96,68 @@ public class RotatingFileBlobStoreWriter implements BlobStoreWriter {
 			w.close();
 		}
 	}
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static class Builder {
+		private boolean overwrite;
+		private File directory;
+		private String prefix;
+		private String suffix;
+		private BlobStoreDefaults defaults = BlobStoreDefaults.STANDARD_DEFAULTS;
+		private int maxIndexEntriesInMemory;
+		private int maxEntryCountPerFile;
+
+		public Builder withOverwrite(boolean overwrite) {
+			this.overwrite = overwrite;
+			return this;
+		}
+
+		public Builder withDirectory(File directory) {
+			this.directory = directory;
+			return this;
+		}
+
+		public Builder withPrefix(String prefix) {
+			this.prefix = prefix;
+			return this;
+		}
+
+		public Builder withSuffix(String suffix) {
+			this.suffix = suffix;
+			return this;
+		}
+
+		public Builder withDefaultMediaType(String mediaType) {
+			this.defaults = new BlobStoreDefaults(mediaType, this.defaults.getDefaultEncoding());
+			return this;
+		}
+
+		public Builder withDefaultEncoding(String encoding) {
+			this.defaults = new BlobStoreDefaults(this.defaults.getDefaultMediaType(), encoding);
+			return this;
+		}
+
+		public Builder withDefaults(BlobStoreDefaults defaults) {
+			this.defaults = defaults;
+			return this;
+		}
+
+		public Builder withMaxIndexEntriesInMemory(int maxIndexEntriesInMemory) {
+			this.maxIndexEntriesInMemory = maxIndexEntriesInMemory;
+			return this;
+		}
+
+		public Builder withMaxEntryCountPerFile(int maxEntryCountPerFile) {
+			this.maxEntryCountPerFile = maxEntryCountPerFile;
+			return this;
+		}
+
+		public RotatingFileBlobStoreWriter build() throws IOException {
+			return new RotatingFileBlobStoreWriter(this);
+		}
+	}
+
 }

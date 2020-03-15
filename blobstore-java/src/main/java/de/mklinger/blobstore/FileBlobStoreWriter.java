@@ -24,16 +24,17 @@ import java.util.zip.GZIPOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.mklinger.blobstore.impl.AbstractBlobStoreWriter;
+import de.mklinger.blobstore.impl.BlobEntryImpl;
 import de.mklinger.blobstore.io.BlobEntryOutputStream;
 import de.mklinger.blobstore.io.ExternalSort;
-import de.mklinger.blobstore.io.GzipCompressingInputStream;
 import de.mklinger.blobstore.io.NonClosingCountingOutputStream;
 import de.mklinger.micro.streamcopy.StreamCopy;
 
 /**
  * @author Marc Klinger - mklinger[at]mklinger[dot]de
  */
-public class FileBlobStoreWriter implements BlobStoreWriter {
+public class FileBlobStoreWriter extends AbstractBlobStoreWriter {
 	private static final Logger LOG = LoggerFactory.getLogger(FileBlobStoreWriter.class);
 
 	protected static final String HEADER_PREFIX = "indexOffset=";
@@ -49,57 +50,6 @@ public class FileBlobStoreWriter implements BlobStoreWriter {
 	private final List<File> indexChunkFiles;
 	private final Object indexEntriesMutex;
 	private final NonClosingCountingOutputStream countingOut;
-
-	public static Builder builder() {
-		return new Builder();
-	}
-
-	public static class Builder {
-		private boolean overwrite;
-		private File blobFile;
-		private File indexFile;
-		private BlobStoreDefaults defaults = BlobStoreDefaults.STANDARD_DEFAULTS;
-		private int maxIndexEntriesInMemory;
-
-		public Builder withOverwrite(boolean overwrite) {
-			this.overwrite = overwrite;
-			return this;
-		}
-
-		public Builder withBlobFile(File blobFile) {
-			this.blobFile = blobFile;
-			return this;
-		}
-
-		public Builder withIndexFile(File indexFile) {
-			this.indexFile = indexFile;
-			return this;
-		}
-
-		public Builder withDefaultMediaType(String mediaType) {
-			this.defaults = new BlobStoreDefaults(mediaType, this.defaults.getDefaultEncoding());
-			return this;
-		}
-
-		public Builder withDefaultEncoding(String encoding) {
-			this.defaults = new BlobStoreDefaults(this.defaults.getDefaultMediaType(), encoding);
-			return this;
-		}
-
-		public Builder withDefaults(BlobStoreDefaults defaults) {
-			this.defaults = defaults;
-			return this;
-		}
-
-		public Builder withMaxIndexEntriesInMemory(int maxIndexEntriesInMemory) {
-			this.maxIndexEntriesInMemory = maxIndexEntriesInMemory;
-			return this;
-		}
-
-		public FileBlobStoreWriter build() throws IOException {
-			return new FileBlobStoreWriter(this);
-		}
-	}
 
 	private FileBlobStoreWriter(Builder builder) throws IOException {
 		this.blobFile = Objects.requireNonNull(builder.blobFile);
@@ -132,26 +82,6 @@ public class FileBlobStoreWriter implements BlobStoreWriter {
 			}
 			Files.delete(file.toPath());
 		}
-	}
-
-	@Override
-	public void addBlobEntryGzEncoded(String name, InputStream nonGzIn) throws IOException {
-		addBlobEntry(name, new GzipCompressingInputStream(nonGzIn), null, BlobEntry.ENCODING_GZIP);
-	}
-
-	@Override
-	public void addBlobEntryGzEncoded(String name, InputStream nonGzIn, String mediaType) throws IOException {
-		addBlobEntry(name, new GzipCompressingInputStream(nonGzIn), mediaType, BlobEntry.ENCODING_GZIP);
-	}
-
-	@Override
-	public void addBlobEntryUnencoded(String name, InputStream in) throws IOException {
-		addBlobEntry(name, in, null, BlobEntry.ENCODING_IDENTITY);
-	}
-
-	@Override
-	public void addBlobEntryUnencoded(String name, InputStream in, String mediaType) throws IOException {
-		addBlobEntry(name, in, mediaType, BlobEntry.ENCODING_IDENTITY);
 	}
 
 	@Override
@@ -311,6 +241,73 @@ public class FileBlobStoreWriter implements BlobStoreWriter {
 			randomAccessFile.write(HEADER_PREFIX.getBytes(BlobEntryImpl.BLOB_ENTRY_NAME_ENCODING));
 			randomAccessFile.write(paddedIndexOffset.getBytes(BlobEntryImpl.BLOB_ENTRY_NAME_ENCODING));
 			randomAccessFile.write(HEADER_SUFFIX.getBytes(BlobEntryImpl.BLOB_ENTRY_NAME_ENCODING));
+		}
+	}
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static class Builder {
+		// package protected
+		static final int DEFAULT_MAX_ENTRIES_IN_MEMORY = 100_000;
+
+		private boolean overwrite;
+		private File blobFile;
+		private File indexFile;
+		private BlobStoreDefaults defaults = BlobStoreDefaults.STANDARD_DEFAULTS;
+		private int maxIndexEntriesInMemory = DEFAULT_MAX_ENTRIES_IN_MEMORY;
+
+		public Builder withOverwrite(boolean overwrite) {
+			this.overwrite = overwrite;
+			return this;
+		}
+
+		public Builder withBlobFile(File blobFile) {
+			this.blobFile = blobFile;
+			return this;
+		}
+
+		/**
+		 * Enable usage of a index file and do not write index data into the blob file.
+		 * Do not set, or set to <code>null</code>, to produce a combined blob file.
+		 */
+		public Builder withIndexFile(File indexFile) {
+			this.indexFile = indexFile;
+			return this;
+		}
+
+		public Builder withDefaultMediaType(String mediaType) {
+			this.defaults = new BlobStoreDefaults(mediaType, this.defaults.getDefaultEncoding());
+			return this;
+		}
+
+		public Builder withDefaultEncoding(String encoding) {
+			this.defaults = new BlobStoreDefaults(this.defaults.getDefaultMediaType(), encoding);
+			return this;
+		}
+
+		public Builder withDefaults(BlobStoreDefaults defaults) {
+			this.defaults = defaults;
+			return this;
+		}
+
+		/**
+		 * Set number of index entries to keep in memory before dumping a index chunk to
+		 * disk. A value &lt;= 0 disables dumping of index chunks to disk, all index
+		 * entries will be kept in memory.
+		 *
+		 * <p>
+		 * Default value: {@value #DEFAULT_MAX_ENTRIES_IN_MEMORY}.
+		 * </p>
+		 */
+		public Builder withMaxIndexEntriesInMemory(int maxIndexEntriesInMemory) {
+			this.maxIndexEntriesInMemory = maxIndexEntriesInMemory;
+			return this;
+		}
+
+		public FileBlobStoreWriter build() throws IOException {
+			return new FileBlobStoreWriter(this);
 		}
 	}
 }

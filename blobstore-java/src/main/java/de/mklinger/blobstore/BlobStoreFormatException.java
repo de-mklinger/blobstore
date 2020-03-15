@@ -7,10 +7,6 @@ public class BlobStoreFormatException extends RuntimeException {
 		super();
 	}
 
-	public BlobStoreFormatException(final String message, final Throwable cause, final boolean enableSuppression, final boolean writableStackTrace) {
-		super(message, cause, enableSuppression, writableStackTrace);
-	}
-
 	public BlobStoreFormatException(final String message, final Throwable cause) {
 		super(message, cause);
 	}

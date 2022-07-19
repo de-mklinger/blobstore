@@ -164,7 +164,7 @@ public class RotatingFileBlobStoreWriter extends AbstractBlobStoreWriter {
 			return this;
 		}
 
-		public RotatingFileBlobStoreWriter build() throws IOException {
+		public RotatingFileBlobStoreWriter build() {
 			return new RotatingFileBlobStoreWriter(this);
 		}
 	}
